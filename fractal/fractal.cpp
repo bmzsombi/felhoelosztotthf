@@ -81,7 +81,7 @@ int main()
 					data[(x + y * domainWidth) * 3 + 0] = 255;
 					data[(x + y * domainWidth) * 3 + 1] = 255;
 					data[(x + y * domainWidth) * 3 + 2] = 255;
-					break;
+					//break;
 				}
 			}
 		}
