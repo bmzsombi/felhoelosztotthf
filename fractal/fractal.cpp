@@ -64,7 +64,7 @@ int main()
     // Start measuring time 
     auto begin = std::chrono::high_resolution_clock::now();
 
-	//#pragma omp parallel for schedule(dynamic)
+	#pragma omp parallel for schedule(dynamic)
 	for (unsigned int y = 0; y < domainHeight; ++y)
 	{
 		for (unsigned int x = 0; x < domainWidth; ++x)
