@@ -50,6 +50,8 @@ void WriteTGA_RGB(const char* filename, unsigned char* data, unsigned int width,
 
 int main()
 {
+
+	omp_set_num_threads(2);
 	const unsigned int domainWidth = 1024;
 	const unsigned int domainHeight = 1024;
 	unsigned char *data = new unsigned char[domainWidth * domainHeight * 3];
