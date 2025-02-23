@@ -23,7 +23,7 @@ void compute_mandelbrot(unsigned char* data, int startY, int endY, int width, in
                     data[(x + (y - startY) * width) * 3 + 0] = 255;
                     data[(x + (y - startY) * width) * 3 + 1] = 255;
                     data[(x + (y - startY) * width) * 3 + 2] = 255;
-                    break;
+                    //break;
                 }
             }
         }
