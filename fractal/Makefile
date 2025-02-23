@@ -5,7 +5,6 @@
 CXX = g++
 CXXFLAGS = -Wall -fopenmp
 LIBS = 
-NCPU ?= 3
 
 
 # compile
@@ -15,7 +14,7 @@ all: fractal.cpp
 # run on the cluster
 .phony:
 run:	fractal
-	srun -o fractal.out -n $(NCPU) ./fractal
+	srun -o fractal.out ./fractal
 	cat fractal.out
 
 # run on the cluster
