@@ -59,7 +59,7 @@ int main()
 	std::complex<double> center(-1.68, -1.23);
 	double scale = 2.35;
 
-	const unsigned int maxIterations = 100;
+	const unsigned int maxIterations = 500;
 
     // Start measuring time 
     auto begin = std::chrono::high_resolution_clock::now();
