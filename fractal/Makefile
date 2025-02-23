@@ -5,7 +5,7 @@
 CXX = g++
 CXXFLAGS = -Wall -fopenmp
 LIBS = 
-NCPU ?= 2
+NCPU ?= 3
 
 
 # compile
