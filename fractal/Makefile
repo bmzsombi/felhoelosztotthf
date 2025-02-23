@@ -14,7 +14,7 @@ all: fractal.cpp
 # run on the cluster
 .phony:
 run:	fractal
-	srun -o fractal.out ./fractal
+	srun --mpi=pmi2 -o fractal.out -N 2 -n 8 ./fractal
 	cat fractal.out
 
 # run on the cluster
