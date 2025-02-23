@@ -2,7 +2,7 @@
 # Example Makefile to compile and run
 # should be modified according to the tools of the paralellization
 #
-CXX = g++
+CXX = mpic++
 CXXFLAGS = -Wall -fopenmp
 LIBS = 
 
