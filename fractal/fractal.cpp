@@ -10,6 +10,7 @@ void compute_mandelbrot(unsigned char* data, int startY, int endY, int width, in
     double scale = 2.35;
     const unsigned int maxIterations = 500;
 
+    // OpenMP párhuzamosítás: a sorok párhuzamos feldolgozása
     #pragma omp parallel for schedule(dynamic)
     for (int y = startY; y < endY; ++y) {
         for (int x = 0; x < width; ++x) {
@@ -38,14 +39,18 @@ int main(int argc, char** argv) {
 
     const unsigned int width = 2048;
     const unsigned int height = 2048;
+
+    // Oszd fel a képet a különböző node-ok között
     const int rowsPerProc = height / numProcs;
     int startY = rank * rowsPerProc;
     int endY = (rank == numProcs - 1) ? height : startY + rowsPerProc;
 
+    // Különböző node-ok helyi adatainak tárolása
     std::vector<unsigned char> localData(rowsPerProc * width * 3, 0);
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
+    // Mandelbrot kiszámítása az adott részfeladatra
     compute_mandelbrot(localData.data(), startY, endY, width, height);
 
     std::vector<unsigned char> fullImage;
@@ -53,6 +58,7 @@ int main(int argc, char** argv) {
         fullImage.resize(width * height * 3);
     }
 
+    // Az adatok összegyűjtése a 0. node-ra
     MPI_Gather(localData.data(), localData.size(), MPI_UNSIGNED_CHAR,
                fullImage.data(), localData.size(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
