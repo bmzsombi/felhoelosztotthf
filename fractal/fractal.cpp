@@ -59,12 +59,12 @@ int main()
 	std::complex<double> center(-1.68, -1.23);
 	double scale = 2.35;
 
-	const unsigned int maxIterations = 500;
+	const unsigned int maxIterations = 100;
 
     // Start measuring time 
     auto begin = std::chrono::high_resolution_clock::now();
 
-	//#pragma omp parallel for schedule(dynamic)
+	#pragma omp parallel for schedule(dynamic)
 	for (unsigned int y = 0; y < domainHeight; ++y)
 	{
 		for (unsigned int x = 0; x < domainWidth; ++x)
