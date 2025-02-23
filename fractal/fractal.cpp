@@ -9,7 +9,7 @@
 #include <cstring>
 #include <complex>
 #include <chrono>
-
+#include <omp.h>
 
 void WriteTGA_RGB(const char* filename, unsigned char* data, unsigned int width, unsigned int height)
 {
