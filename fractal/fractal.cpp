@@ -1,100 +1,67 @@
-//
-// fractal.cpp: serial verison of a Mandelbrot set generator.
-// The generated image (.tga) file size is 1024x1024 pixels.
-//
-
+#include <mpi.h>
+#include <omp.h>
 #include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
 #include <complex>
 #include <chrono>
-#include <omp.h>
+#include <vector>
 
-void WriteTGA_RGB(const char* filename, unsigned char* data, unsigned int width, unsigned int height)
-{
-	FILE *f = fopen(filename, "wb");
-	if (!f) {
-		fprintf(stderr, "Unable to create output TGA image `%s'\n", filename);
-		exit(EXIT_FAILURE);
-	}
+void compute_mandelbrot(unsigned char* data, int startY, int endY, int width, int height) {
+    std::complex<double> center(-1.68, -1.23);
+    double scale = 2.35;
+    const unsigned int maxIterations = 500;
 
-	fputc(0x00, f); /* ID Length, 0 => No ID        */
-	fputc(0x00, f); /* Color Map Type, 0 => No color map included   */
-	fputc(0x02, f); /* Image Type, 2 => Uncompressed, True-color Image */
-	fputc(0x00, f); /* Next five bytes are about the color map entries */
-	fputc(0x00, f); /* 2 bytes Index, 2 bytes length, 1 byte size */
-	fputc(0x00, f);
-	fputc(0x00, f);
-	fputc(0x00, f);
-	fputc(0x00, f); /* X-origin of Image    */
-	fputc(0x00, f);
-	fputc(0x00, f); /* Y-origin of Image    */
-	fputc(0x00, f);
-	fputc(width & 0xff, f); /* Image Width      */
-	fputc((width >> 8) & 0xff, f);
-	fputc(height & 0xff, f); /* Image Height     */
-	fputc((height >> 8) & 0xff, f);
-	fputc(0x18, f); /* Pixel Depth, 0x18 => 24 Bits */
-	fputc(0x20, f); /* Image Descriptor     */
-
-	for (int y = height - 1; y >= 0; y--) {
-		for (size_t x = 0; x < width; x++) {
-			const size_t i = (y * width + x) * 3;
-			fputc(data[i + 2], f); /* write blue */
-			fputc(data[i + 1], f); /* write green */
-			fputc(data[i], f); /* write red */
-		}
-	}
+    #pragma omp parallel for schedule(dynamic)
+    for (int y = startY; y < endY; ++y) {
+        for (int x = 0; x < width; ++x) {
+            std::complex<double> c(x / (double)width * scale + center.real(),
+                                   y / (double)height * scale + center.imag());
+            std::complex<double> z(c);
+            for (unsigned int iteration = 0; iteration < maxIterations; ++iteration) {
+                z = z * z + c;
+                if (std::abs(z) > 1.0f) {
+                    data[(x + (y - startY) * width) * 3 + 0] = 255;
+                    data[(x + (y - startY) * width) * 3 + 1] = 255;
+                    data[(x + (y - startY) * width) * 3 + 2] = 255;
+                    break;
+                }
+            }
+        }
+    }
 }
 
-int main()
-{
+int main(int argc, char** argv) {
+    MPI_Init(&argc, &argv);
 
-	omp_set_num_threads(5);
-	const unsigned int domainWidth = 1024;
-	const unsigned int domainHeight = 1024;
-	unsigned char *data = new unsigned char[domainWidth * domainHeight * 3];
-	std::memset(data, 0, domainWidth * domainHeight * 3 * sizeof(unsigned char));
+    int rank, numProcs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-	std::complex<double> K(0.353, 0.288);
-	std::complex<double> center(-1.68, -1.23);
-	double scale = 2.35;
+    const unsigned int width = 2048;
+    const unsigned int height = 2048;
+    const int rowsPerProc = height / numProcs;
+    int startY = rank * rowsPerProc;
+    int endY = (rank == numProcs - 1) ? height : startY + rowsPerProc;
 
-	const unsigned int maxIterations = 500;
+    std::vector<unsigned char> localData(rowsPerProc * width * 3, 0);
 
-    // Start measuring time 
-    auto begin = std::chrono::high_resolution_clock::now();
+    auto startTime = std::chrono::high_resolution_clock::now();
 
-	#pragma omp parallel for schedule(dynamic)
-	for (unsigned int y = 0; y < domainHeight; ++y)
-	{
-		for (unsigned int x = 0; x < domainWidth; ++x)
-		{
-			std::complex<double> c(x / (double)domainWidth * scale + center.real(),
-				y / (double)domainHeight * scale + center.imag());
+    compute_mandelbrot(localData.data(), startY, endY, width, height);
 
-			std::complex<double> z(c);
-			for (unsigned int iteration = 0; iteration < maxIterations; ++iteration)
-			{
-				z = z * z + c;
-				if (std::abs(z) > 1.0f)
-				{
-					data[(x + y * domainWidth) * 3 + 0] = 255;
-					data[(x + y * domainWidth) * 3 + 1] = 255;
-					data[(x + y * domainWidth) * 3 + 2] = 255;
-				}
-			}
-		}
-	}
+    std::vector<unsigned char> fullImage;
+    if (rank == 0) {
+        fullImage.resize(width * height * 3);
+    }
 
-        // Stop measuring time and calculate the elapsed time
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-	std::cout << "Elapsed time:" << elapsed.count()*1e-3 << "s" << std::endl;
+    MPI_Gather(localData.data(), localData.size(), MPI_UNSIGNED_CHAR,
+               fullImage.data(), localData.size(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
-	WriteTGA_RGB("mandelbrot.tga", data, domainWidth, domainHeight);
-	delete[] data;
-	return 0;
+    auto endTime = std::chrono::high_resolution_clock::now();
+    if (rank == 0) {
+        double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count() * 1e-3;
+        std::cout << "Elapsed time: " << elapsed << "s" << std::endl;
+    }
+
+    MPI_Finalize();
+    return 0;
 }
-
