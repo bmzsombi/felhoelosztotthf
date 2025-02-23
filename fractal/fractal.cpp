@@ -50,8 +50,8 @@ void WriteTGA_RGB(const char* filename, unsigned char* data, unsigned int width,
 
 int main()
 {
-	const unsigned int domainWidth = 2048;
-	const unsigned int domainHeight = 2048;
+	const unsigned int domainWidth = 1024;
+	const unsigned int domainHeight = 1024;
 	unsigned char *data = new unsigned char[domainWidth * domainHeight * 3];
 	std::memset(data, 0, domainWidth * domainHeight * 3 * sizeof(unsigned char));
 
