@@ -15,7 +15,7 @@ all: fractal.cpp
 # run on the cluster
 .phony:
 run:	fractal
-	srun -o fractal.out -n $(NCPU) ./fractal
+	srun -o fractal.out -w cn01 -n $(NCPU) ./fractal
 	cat fractal.out
 
 # run on the cluster
