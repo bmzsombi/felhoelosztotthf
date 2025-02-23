@@ -3,7 +3,6 @@
 # May be modified
 
 #SBATCH -o fractal.out
-#SBATCH --nodes 4
 
 
 ./fractal
